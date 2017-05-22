@@ -8,6 +8,9 @@ from pyspark.ml.feature import VectorAssembler
 from pyspark.sql.types import StructType
 from pyspark.sql.types import StructField
 from pyspark.sql.types import FloatType
+from pyspark.sql.types import IntegerType
+from pyspark.sql.types import when
+
 
 # Create spark session
 spark = SparkSession.builder.master("local").appName("iris").getOrCreate()
@@ -36,8 +39,14 @@ testing = testing.select("X", "y")
 print("Training Schema: ")
 training.printSchema()
 
-print("Training Data")
+print("Show first 20 Training Data: ")
 print(training.show(truncate=False))
+
+print("Testing Schema: ")
+testing.printSchema()
+
+print("Show first 20 Testing Data: ")
+print(testing.show(truncate=False))
 
 # LOGISTIC REGRESSION TO TRAIN THE DATA
 lr = LogisticRegression(maxIter=10, regParam=0.03, elasticNetParam=0.8, featuresCol="X", labelCol="y")
@@ -49,19 +58,19 @@ lrFit = lr.fit(training)
 prediction = lrFit.transform(testing)
 
 # SHOW PREDICTIONS
+prediction.withColumn("y", when(prediction.y.isNotNull(), 1).otherwise(0))
 prediction.select("y", "probability", "prediction").show()
 
 ## PRINT THE COEFFICIENTS AND INTERCEPT FOR LOGISTIC REGRESSION
 print("Coefficients: " + str(lrFit.coefficientMatrix))
 print("Intercept: " + str(lrFit.intercept))
 
-acc = 0
-count = 0
+accuracy = 0
+lines = 0
 for row in prediction.collect():
-    print("Actual " + str(row.y) + "prediction" + str(row.prediction) + " (" + str(row.probability) + ")")
+    print("Expected: " + str(row.y) + "; Prediction: " + str(row.prediction) + " (" + str(row.probability) + ")")
     if row.y == row.prediction:
-        acc+= 1
-    count+= 1
+        accuracy+= 1
+    lines+= 1
 
-print("Accuracy " + str(acc) + "/" + str(count) + " = " + (str(float(acc)/count)))
-
+print("Accuracy " + str(accuracy) + "/" + str(lines) + " = " + (str(float(accuracy)/lines)))
