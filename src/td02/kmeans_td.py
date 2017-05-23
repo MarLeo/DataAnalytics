@@ -47,10 +47,11 @@ print(str(cost))
 transformed = model.transform(training).select("features", "label", "prediction")
 transformed.show(truncate = False)
 
-
+print("entries for each cluster:")
 clusters = transformed.groupby('prediction').count()
 clusters.show(truncate = False)
 
+print("number of iris in a cluster:")
 labels_by_cluster = transformed.groupBy('label', 'prediction').count()
 labels_by_cluster.show(truncate = False)
 
@@ -58,11 +59,14 @@ labels_by_cluster.show(truncate = False)
 clusters_prediction = labels_by_cluster.select(col('prediction').alias('pred'), col('label').alias('label'), col('count').alias('counter'))
 clusters_numbers = clusters.select(col('prediction').alias('predict'), col('count').alias('cnt'))
 
+print("percentage of iris by cluster:")
 result = clusters.join(clusters_prediction, clusters.prediction == clusters_prediction.pred).select(clusters_prediction.label, clusters.prediction, clusters_prediction.counter, ((col('counter')/col('count')*100)).alias('percentage')).groupBy('label', 'prediction').avg()
 result.select('label', 'prediction', col('avg(percentage)').alias('percentage')).show(truncate = False)
 
 #centroids
 centroids = model.clusterCenters()
-print("cluster centroids : ")
+print("cluster centroids:")
 for centroid in centroids:
         print(centroid)
+
+spark.stop()
