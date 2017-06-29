@@ -1,4 +1,5 @@
 import os
+import sys
 
 from pyspark import SparkContext, SparkConf
 from pyspark.mllib.random import RandomRDDs
@@ -32,8 +33,8 @@ def moyenne(x, n):
     return [x[i]/n for i in range(len(x))] 
 
 
-def loadData(sc):
-    data = sc.textFile("data/iris_clustering.dat")
+def loadData(sc, path):
+    data = sc.textFile(path) #"data/iris_clustering.dat"
     mappedData = data.map(lambda l: l.split(","))\
                     .filter(lambda l: len(l) == 5)\
                     .map(lambda l: [float(i) for i in l[:4]] + [str(l[4])])\
@@ -71,9 +72,11 @@ def computeIntraClusterDistance(close_distance):
 
 
 
-def kmeans(sc, clusters=3, iterations=0, hasConverge=False, moved=0):
+def kmeans(sc, path, clusters, max_iterations, hasConverge=False, moved=0):
 
-    mappedData = loadData(sc)
+    iterations = 0
+
+    mappedData = loadData(sc, path)
 
      # Initialize centroids sample(True, 0.02, 1)\
     centroids = sc.parallelize(mappedData.takeSample(False, clusters)).zipWithIndex().map(lambda l: (l[1], l[0][1][:-1]))                   
@@ -81,29 +84,29 @@ def kmeans(sc, clusters=3, iterations=0, hasConverge=False, moved=0):
     for centroid in centroids.collect():
         print centroid 
 
-    while not hasConverge:
-        close_distance = assignTocluster(mappedData, centroids) 
+    while not hasConverge and iterations <= max_iterations:
+            close_distance = assignTocluster(mappedData, centroids) 
 
-        new_centroids = computeCentroids(close_distance, mappedData)
+            new_centroids = computeCentroids(close_distance, mappedData)
 
-        intra_cluster_distance = computeIntraClusterDistance(close_distance)
-        print("Intra cluster distance: " + str(intra_cluster_distance)) 
+            intra_cluster_distance = computeIntraClusterDistance(close_distance)
+            print("Intra cluster distance: " + str(intra_cluster_distance)) 
 
-        if iterations > 0:
-            moved = prev_assignment.join(close_distance)\
-                                    .filter(lambda l: l[1][0][0] != l[1][1][0])\
-                                    .count()
-        else:
-            moved = 150
-        if moved == 0 or iterations == 100:
-            hasConverge = True
-        else:
-            centroids = new_centroids
-            prev_assignment = close_distance
-            iterations += 1
+            if iterations > 0:
+                moved = prev_assignment.join(close_distance)\
+                                        .filter(lambda l: l[1][0][0] != l[1][1][0])\
+                                        .count()
+            else:
+                moved = 150
+            if moved == 0 or iterations == 100:
+                hasConverge = True
+            else:
+                centroids = new_centroids
+                prev_assignment = close_distance
+                iterations += 1
 
     return (intra_cluster_distance, iterations)
-
+    
 
 
 
@@ -221,14 +224,27 @@ def customKmeans(mappedData, clusters, sc):
       
 
 if __name__ == "__main__":
+    
+
+    if len(sys.argv) != 4:
+        print("Usage: kmeans.py <file> <k> <m>")
+        exit(-1)
 
     # Create Spark conf
     conf = SparkConf().setAppName("kmeans").setMaster("local")
     sc = SparkContext(conf=conf)
 
-    solution = kmeans(sc)
-    print(solution)
+    path = sys.argv[1]
+    clusters = int(sys.argv[2])
+    max_iterations = int(sys.argv[3])
+    total = 0
+    for i in range(0, 100):
+        print("Iteration number: " + str(i))
+        solution = kmeans(sc, path, clusters, max_iterations)
+        total += solution[0]/100
+        print(solution)
 
+    print("average intra cluster distance: " + str(total))   
 
     '''
     mappedData = loadData(sc)
