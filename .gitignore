@@ -93,3 +93,4 @@ ENV/
 /id_rsa_user65
 *.pdf
 *.dat
+test.py

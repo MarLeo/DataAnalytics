@@ -39,10 +39,16 @@ schema = StructType([
 # Apply the schema to RDD
 schemaPeople = spark.createDataFrame(people, schema)
 schemaPeople.printSchema()
-changedTypedf = schemaPeople.withColumn("cid", schemaPeople["cid"].cast(DoubleType()))
-new_df = changedTypedf.withColumn("startDate", (changedTypedf["startDate"].cast(DateType())))
+changedTypedf = schemaPeople.withColumn("cid", schemaPeople['cid'].cast(DoubleType()))
+new_df = changedTypedf.withColumn("startDate", (changedTypedf['startDate'].cast(DateType())))
 new_df.printSchema()
+print("data show: ")
+new_df.select("name").show()#.filter(month(new_df['startDate']) == 7).show()
 
+new_df.select("name").filter(month(new_df['startDate']) == "").distinct().show()
+
+
+'''
 new_df.createOrReplaceTempView("people")
 
 query1 = spark.sql("select * from people").filter(month(col("startDate")) == 7)
@@ -51,12 +57,22 @@ query1.show()
 
 query2 = spark.sql("select distinct(name) from people").filter(month(col("startDate")) == 7)
 query2.show()
+'''
 
 schema_order = StructType([
     StructField("cid", StringType(), True),
     StructField("total", StringType(), True)])
 
 orders = spark.sparkContext.textFile("data/Order.txt").map(lambda l: l.split(",")).map(lambda p: (p[0], p[1]))
+schemaOrder = spark.createDataFrame(orders, schema_order)
+order_df = schemaOrder.withColumn("cid", schemaOrder["cid"].cast(DoubleType()))
+new_order_df = order_df.withColumn("total", order_df["total"].cast(IntegerType()))
+new_order_df.printSchema()
+
+new_order_df.select("cid", sum(new_order_df['total'])).groupby("cid").show()   #.sum(new_order_df['total']).show()
+
+
+'''
 schemaOrder = spark.createDataFrame(orders, schema_order)
 order_df = schemaOrder.withColumn("cid", schemaOrder["cid"].cast(DoubleType()))
 new_order_df = order_df.withColumn("total", order_df["total"].cast(IntegerType()))
@@ -68,4 +84,4 @@ query3.show()
 
 query4 = spark.sql("select C.cid, O.total from people C, orders O where C.name like 'B%' and C.cid = O.cid")
 query4.show()
-
+'''

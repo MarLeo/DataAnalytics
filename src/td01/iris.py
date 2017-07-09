@@ -1,4 +1,6 @@
 import os
+import time
+
 from pyspark.ml.linalg import Vectors
 from pyspark.ml.classification import LogisticRegression
 from pyspark.sql import SQLContext
@@ -11,7 +13,7 @@ from pyspark.sql.types import FloatType
 from pyspark.sql.types import IntegerType
 from pyspark.sql.types import when
 
-
+start_time = time.time()
 # Create spark session
 spark = SparkSession.builder.master("local").appName("iris").getOrCreate()
 
@@ -74,3 +76,4 @@ for row in prediction.collect():
     lines+= 1
 
 print("Accuracy " + str(accuracy) + "/" + str(lines) + " = " + (str(float(accuracy)/lines)))
+print("---- %s seconds ----" % (time.time() - start_time))
