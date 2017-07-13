@@ -39,6 +39,7 @@ schema = StructType([
 # Apply the schema to RDD
 schemaPeople = spark.createDataFrame(people, schema)
 schemaPeople.printSchema()
+<<<<<<< HEAD
 changedTypedf = schemaPeople.withColumn("cid", schemaPeople['cid'].cast(DoubleType()))
 new_df = changedTypedf.withColumn("startDate", (changedTypedf['startDate'].cast(DateType())))
 new_df.printSchema()
@@ -49,6 +50,12 @@ new_df.select("name").filter(month(new_df['startDate']) == "").distinct().show()
 
 
 '''
+=======
+changedTypedf = schemaPeople.withColumn("cid", schemaPeople["cid"].cast(DoubleType()))
+new_df = changedTypedf.withColumn("startDate", (changedTypedf["startDate"].cast(DateType())))
+new_df.printSchema()
+
+>>>>>>> 18eba859cf9f3944703cd45e813afd514b5d3f90
 new_df.createOrReplaceTempView("people")
 
 query1 = spark.sql("select * from people").filter(month(col("startDate")) == 7)
@@ -57,7 +64,10 @@ query1.show()
 
 query2 = spark.sql("select distinct(name) from people").filter(month(col("startDate")) == 7)
 query2.show()
+<<<<<<< HEAD
 '''
+=======
+>>>>>>> 18eba859cf9f3944703cd45e813afd514b5d3f90
 
 schema_order = StructType([
     StructField("cid", StringType(), True),
@@ -67,6 +77,7 @@ orders = spark.sparkContext.textFile("data/Order.txt").map(lambda l: l.split(","
 schemaOrder = spark.createDataFrame(orders, schema_order)
 order_df = schemaOrder.withColumn("cid", schemaOrder["cid"].cast(DoubleType()))
 new_order_df = order_df.withColumn("total", order_df["total"].cast(IntegerType()))
+<<<<<<< HEAD
 new_order_df.printSchema()
 
 new_order_df.select("cid", sum(new_order_df['total'])).groupby("cid").show()   #.sum(new_order_df['total']).show()
@@ -76,6 +87,8 @@ new_order_df.select("cid", sum(new_order_df['total'])).groupby("cid").show()   #
 schemaOrder = spark.createDataFrame(orders, schema_order)
 order_df = schemaOrder.withColumn("cid", schemaOrder["cid"].cast(DoubleType()))
 new_order_df = order_df.withColumn("total", order_df["total"].cast(IntegerType()))
+=======
+>>>>>>> 18eba859cf9f3944703cd45e813afd514b5d3f90
 new_order_df.createOrReplaceTempView("orders")
 new_order_df.printSchema()
 
@@ -84,4 +97,8 @@ query3.show()
 
 query4 = spark.sql("select C.cid, O.total from people C, orders O where C.name like 'B%' and C.cid = O.cid")
 query4.show()
+<<<<<<< HEAD
 '''
+=======
+
+>>>>>>> 18eba859cf9f3944703cd45e813afd514b5d3f90
